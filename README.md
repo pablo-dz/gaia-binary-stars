@@ -5,7 +5,7 @@ Estimación de la fracción de **binarias MS-MS** en cúmulos globulares a parti
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
 <p align="center">
-  <img src="figures/report/binaries_m5.png" width="70%" alt="Isócrona ajustada y binarias identificadas en M5">
+  <img src="figures/report/isochrone_fit.png" width="120%" alt="Isócrona ajustada">
 </p>
 
 ## Resumen
@@ -14,32 +14,35 @@ La fracción de estrellas binarias depende del ambiente en que viven, pero la li
 
 1. Se seleccionan los miembros de cada cúmulo por movimiento propio (`pmra`).
 2. Se ajusta una isócrona MIST al CMD y se identifica la secuencia principal.
-3. Se construye la secuencia de binarias de razón de masas `q = M2/M1` desplazando la MS: `m_bin = m1 − 2.5·log10(1 + q^3.5)`.
-4. Las estrellas más brillantes que esa secuencia, con `q > q0 = 0.4`, se cuentan como binarias: `f_bin = N_bin / (N_bin + N_s)`.
+3. Se construye la secuencia de binarias de razón de masas $q=M_2/M_1$ desplazando la MS: 
+   $$m_{\text{bin}} = m_1 − 2.5 \log_{10}(1 + q^{3.5})$$
+4. Las estrellas más brillantes que esa secuencia, con $q > q_0 = 0.4$, se cuentan como binarias: 
+   $$f_{\text{bin}} = \dfrac{N_{\text{bin}}}{N_{\text{bin}} + N_s}$$
 
 El informe completo está en [`reports/informe_fraccion_binaria.pdf`](reports/informe_fraccion_binaria.pdf).
 
 ## Autores
 
-Proyecto grupal desarrollado en la Pontificia Universidad Católica de Chile (2023):
-Camila Ferrus, Claudia Rodríguez, Luciano Torreblanca y Pablo Díaz Arancibia.
+Proyecto grupal desarrollado en la Pontificia Universidad Católica de Chile (2023): Pablo Díaz, Claudia Rodríguez, Luciano Torreblanca y Camila Ferrus.
 
-## Resultados del informe (versión preliminar)
+## Resultados
 
-Cúmulos globulares analizados: M2, M3, M4, M5, M12, M13, M22 y NGC 104 (los cúmulos abiertos se descartaron por falta de datos). Fracción binaria para `q > 0.4`, según el informe:
+Cúmulos globulares analizados: M2, M3, M4, M5, M12, M13, M22 y NGC 104 (los cúmulos abiertos se descartaron por falta de datos). Fracción binaria para $q>0.4$, 
 
-| M2 | M3 | M4 | M5 | M12 | M13 | M22 | NGC 104 |
-|---|---|---|---|---|---|---|---|
-| 17,8 % | 58,5 % | 4,0 % | 43,6 % | 14,8 % | 12,7 % | 3,0 % | 6,0 % |
+<p align="center">
+  <img src="figures/report/binary_fractions.png" width="120%" alt="Fracciones binarias">
+</p>
+
 
 Con estos valores el informe **no encuentra una correlación clara** entre fracción binaria y edad (alta dispersión, pocos cúmulos), en línea con Pang et al. (2023b). Los propios autores indican que las cifras son preliminares y no reflejan los resultados finales (problemas de interpolación y falta de reducción de datos). Ver más abajo las diferencias con el código original.
 
 <p align="center">
-  <img src="figures/report/msrl_binning_ngc4755.png" width="48%" alt="MSRL por data binning en NGC 4755">
-  <img src="figures/report/isochrone_fit_ngc104.png" width="48%" alt="Ajuste de isócronas a NGC 104">
+  <img src="figures/report/msrl_binning_ngc4755.png" width="100%" alt="MSRL por data binning en NGC 4755">
+ <p align="center">
+  <img src="figures/report/hr_diagrams.png" width="100%" alt="Fracción binaria frente a la edad del cúmulo">
 </p>
 <p align="center">
-  <img src="figures/report/fraction_vs_age.png" width="55%" alt="Fracción binaria frente a la edad del cúmulo">
+  <img src="figures/report/fraction_vs_age.png" width="100%" alt="Fracción binaria frente a la edad del cúmulo">
 </p>
 
 ## Diferencias con el notebook original
@@ -57,7 +60,7 @@ Además se reemplazó `name.rstrip('-result.csv')` (que quita caracteres, no el 
 
 ## Limitaciones conocidas
 
-- **q0 = 0,4 equivale a un desplazamiento de solo ≈ 0,04 mag.** Es del orden o menor que la dispersión fotométrica de Gaia en estos CMD, por lo que muchas estrellas individuales quedan por encima de la línea y la fracción se sobrestima. Pang et al. (2023a) acotan una región con polígonos y evalúan la contaminación con estrellas artificiales; aquí no se hace.
+- **$q_0 = 0,4$ equivale a un desplazamiento de solo ≈ 0,04 mag.** Es del orden o menor que la dispersión fotométrica de Gaia en estos CMD, por lo que muchas estrellas individuales quedan por encima de la línea y la fracción se sobrestima. Pang et al. (2023a) acotan una región con polígonos y evalúan la contaminación con estrellas artificiales; aquí no se hace.
 - **Región de la MS acotada solo en magnitud.** En ese rango de G también caen subgigantes, gigantes y rama horizontal. La opción `binaries.ms_color_window` (por defecto `null`, como el notebook) permite restringir la selección a una franja de color alrededor de la MS.
 - **Ajuste visual de isócronas.** Distancia, puntos cero y [Fe/H] se eligieron a ojo y son degenerados entre sí (los puntos cero incluyen enrojecimiento). Algunos [Fe/H] elegidos difieren mucho de los de la literatura citada en el informe (por ejemplo M22 y M12).
 - **Edad de las isócronas fija en log(edad) = 10,3** (el máximo que permite descargar MIST) para todos los cúmulos; la edad que se usa en la figura fracción-edad proviene de la literatura.

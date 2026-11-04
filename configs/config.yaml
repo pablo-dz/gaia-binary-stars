@@ -1,0 +1,57 @@
+# Configuración del proyecto. Las rutas son relativas a la raíz del repositorio.
+paths:
+  raw_dir: data/raw
+  results_dir: results
+  figures_dir: figures
+
+figures:
+  format: png      # png | pdf
+  dpi: 200
+
+# --- Isócronas MIST (descargar aparte, ver data/README.md) ------------------
+isochrones:
+  directory: iso_files/MIST_v1.2_vvcrit0.0_UBVRIplus
+  pattern: "*.iso.cmd"
+  log_age: 10.3                 # log10(edad/yr); 10.3 es el máximo que permite descargar MIST
+  bands: {g: Gaia_G_EDR3, bp: Gaia_BP_EDR3, rp: Gaia_RP_EDR3}
+
+# --- Fracción binaria -------------------------------------------------------
+binaries:
+  q: 0.4                         # razón de masas mínima q0 (Pang et al. 2023a)
+  # corrected: ecuación (3) del informe (m_bin = m1 − 2.5·log10(1+q^3.5)), interpolación ordenada y
+  #            binaria = más brillante que la secuencia de binarias.
+  # legacy:    replica el notebook original (ver README, "Diferencias con el notebook").
+  method: corrected
+  g_margin: 0.1                  # la región de la MS llega hasta G_max(MS) + g_margin
+  ms_color_window: null          # p. ej. 0.15: solo estrellas a ≤ 0.15 mag (en color) de la MS; null = como el notebook
+  required_columns: [phot_g_mean_mag, phot_bp_mean_mag, phot_rp_mean_mag, pmra, distance_gspphot]
+
+# --- Cúmulos ----------------------------------------------------------------
+# pmra: región (mas/yr) elegida a mano en el histograma. Los cúmulos con `binary_fraction: true` tienen
+# además ajuste de isócrona: distancia (pc), puntos cero [mag] ajustados visualmente y [Fe/H] elegido.
+clusters:
+  M2:  {file: M2-result.csv,  pmra: [-3, 10],  binary_fraction: true, distance_pc: 10118.13, zero_points: {g: 0.1,  bp: -0.21, rp: -0.10}, best_feh: -1.5,  age_yr: 13.0e9}
+  M3:  {file: M3-result.csv,  pmra: [-7, 10],  binary_fraction: true, distance_pc: 10384,    zero_points: {g: 0.5,  bp: 0.12,  rp: 0.18},  best_feh: -1.5,  age_yr: 11.4e9}
+  M4:  {file: M4-result.csv,  pmra: [-17, -5], binary_fraction: true, distance_pc: 2203,     zero_points: {g: -0.5, bp: -0.18, rp: 0.37},  best_feh: -1.0,  age_yr: 12.2e9}
+  M5:  {file: M5-result.csv,  pmra: [-2, 10],  binary_fraction: true, distance_pc: 7508,     zero_points: {g: 0.47, bp: -0.18, rp: -0.15}, best_feh: -1.0,  age_yr: 12.7e9}
+  M12: {file: M12-result.csv, pmra: [-7, 10],  binary_fraction: true, distance_pc: 4812,     zero_points: {g: 0.36, bp: -0.18, rp: -0.23}, best_feh: 0.25,  age_yr: 13.0e9}
+  M13: {file: M13-result.csv, pmra: [-10, 5],  binary_fraction: true, distance_pc: 6800,     zero_points: {g: 0.25, bp: 0.3,   rp: 0.2},   best_feh: -0.75, age_yr: 11.66e9}
+  M22: {file: M22-result.csv, pmra: [5, 15],   binary_fraction: true, distance_pc: 4801,     zero_points: {g: 0.6,  bp: 0.5,   rp: 0.7},   best_feh: -0.25, age_yr: 12.0e9}
+  NGC104: {file: NGC104-result.csv, pmra: [2, 10], binary_fraction: true, distance_pc: 4100, zero_points: {g: 0.0373349, bp: 0.0128961, rp: 0.0030233}, best_feh: -0.5, age_yr: 13.1e9}
+  # Descartados del análisis (pocos datos tras la corrección):
+  M6:      {file: M6-result.csv,      pmra: [-15, 7]}
+  M7:      {file: M7-result.csv,      pmra: [-10, 10]}
+  M44:     {file: M44-result.csv,     pmra: [-16, 14]}
+  NGC3532: {file: NGC3532-result.csv, pmra: [-25, 15]}
+  ngc2808: {file: ngc2808-result.csv, pmra: [-7, 10]}
+  ngc4755: {file: ngc4755-result.csv, pmra: [-25, 15]}
+  ngc6694: {file: ngc6694-result.csv, pmra: [-15, 12]}
+
+# --- Análisis preliminar (MSRL por data binning) ---------------------------
+preliminary:
+  method: corrected              # corrected | legacy (legacy reproduce la tabla 2 del informe)
+  q_values: [0.7, 0.6, 0.5, 0.4]
+  clusters:                      # bins: [inicio, fin, paso] en BP−RP
+    ngc4755: {file: ngc4755.csv, mag_limit: 20, bins: [0.2, 2.3, 0.05], kernel_std: 0.3, color_range: [0.2, 2.3]}
+    ngc6694: {file: ngc6694.csv, mag_limit: 19, bins: [0.65, 1.9, 0.03], kernel_std: 0.1, color_range: [0.65, 1.9]}
+    ngc2808: {file: ngc2808.csv, mag_limit: 19, bins: [0.65, 1.9, 0.03], kernel_std: 0.1, color_range: [0.65, 1.9]}

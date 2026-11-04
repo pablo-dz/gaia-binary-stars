@@ -1,0 +1,134 @@
+# Fracción binaria en cúmulos estelares · Gaia DR3 + isócronas MIST
+
+Estimación de la fracción de **binarias MS-MS** en cúmulos globulares a partir de diagramas color-magnitud de **Gaia DR3** y de la secuencia principal (MS) de **isócronas MIST**, y estudio preliminar de su relación con la edad del cúmulo.
+
+![Python](https://img.shields.io/badge/python-3.10%2B-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+
+<p align="center">
+  <img src="figures/report/binaries_m5.png" width="70%" alt="Isócrona ajustada y binarias identificadas en M5">
+</p>
+
+## Resumen
+
+La fracción de estrellas binarias depende del ambiente en que viven, pero la literatura no es concluyente sobre su relación con la edad del cúmulo (Sollima et al. 2007 encuentran una correlación negativa; Milone et al. 2012 no). Este proyecto reproduce el método de identificación de binarias de Pang et al. (2023a):
+
+1. Se seleccionan los miembros de cada cúmulo por movimiento propio (`pmra`).
+2. Se ajusta una isócrona MIST al CMD y se identifica la secuencia principal.
+3. Se construye la secuencia de binarias de razón de masas `q = M2/M1` desplazando la MS: `m_bin = m1 − 2.5·log10(1 + q^3.5)`.
+4. Las estrellas más brillantes que esa secuencia, con `q > q0 = 0.4`, se cuentan como binarias: `f_bin = N_bin / (N_bin + N_s)`.
+
+El informe completo está en [`reports/informe_fraccion_binaria.pdf`](reports/informe_fraccion_binaria.pdf).
+
+## Autores
+
+Proyecto grupal desarrollado en la Pontificia Universidad Católica de Chile (2023):
+Camila Ferrus, Claudia Rodríguez, Luciano Torreblanca y Pablo Díaz Arancibia.
+
+## Resultados del informe (versión preliminar)
+
+Cúmulos globulares analizados: M2, M3, M4, M5, M12, M13, M22 y NGC 104 (los cúmulos abiertos se descartaron por falta de datos). Fracción binaria para `q > 0.4`, según el informe:
+
+| M2 | M3 | M4 | M5 | M12 | M13 | M22 | NGC 104 |
+|---|---|---|---|---|---|---|---|
+| 17,8 % | 58,5 % | 4,0 % | 43,6 % | 14,8 % | 12,7 % | 3,0 % | 6,0 % |
+
+Con estos valores el informe **no encuentra una correlación clara** entre fracción binaria y edad (alta dispersión, pocos cúmulos), en línea con Pang et al. (2023b). Los propios autores indican que las cifras son preliminares y no reflejan los resultados finales (problemas de interpolación y falta de reducción de datos). Ver más abajo las diferencias con el código original.
+
+<p align="center">
+  <img src="figures/report/msrl_binning_ngc4755.png" width="48%" alt="MSRL por data binning en NGC 4755">
+  <img src="figures/report/isochrone_fit_ngc104.png" width="48%" alt="Ajuste de isócronas a NGC 104">
+</p>
+<p align="center">
+  <img src="figures/report/fraction_vs_age.png" width="55%" alt="Fracción binaria frente a la edad del cúmulo">
+</p>
+
+## Diferencias con el notebook original
+
+El código de este repositorio sigue el método descrito en el informe, pero corrige cuatro puntos del notebook original (`method: corrected`, valor por defecto). Con `method: legacy` en `configs/config.yaml` se replica el comportamiento anterior para reproducir las cifras del informe.
+
+| Punto | Notebook original | Este repositorio |
+|---|---|---|
+| Magnitud de la binaria | `m + 2.5·log10(1+q^3.5)` (signo `+`): la secuencia de binarias queda *más débil* | `m − 2.5·log10(1+q^3.5)`, como la ecuación (3) del informe |
+| Color de la secuencia de binarias | Se aplica también al color BP−RP (un desplazamiento de magnitud sobre un color) | Se desplaza solo G; el color se mantiene |
+| Interpolación | `np.interp` sobre puntos de la isócrona sin ordenar por color (requiere abscisas crecientes) | Se usa el tramo monótono de la MS, ordenado por color |
+| Criterio de binaria | `g > curva` (estrellas *más débiles* que la secuencia) | `g < curva` (más brillantes), que es la definición |
+
+Además se reemplazó `name.rstrip('-result.csv')` (que quita caracteres, no el sufijo) por una configuración explícita de archivos, y la lectura de datos, el ajuste y la identificación de binarias están separados en módulos reutilizables.
+
+## Limitaciones conocidas
+
+- **q0 = 0,4 equivale a un desplazamiento de solo ≈ 0,04 mag.** Es del orden o menor que la dispersión fotométrica de Gaia en estos CMD, por lo que muchas estrellas individuales quedan por encima de la línea y la fracción se sobrestima. Pang et al. (2023a) acotan una región con polígonos y evalúan la contaminación con estrellas artificiales; aquí no se hace.
+- **Región de la MS acotada solo en magnitud.** En ese rango de G también caen subgigantes, gigantes y rama horizontal. La opción `binaries.ms_color_window` (por defecto `null`, como el notebook) permite restringir la selección a una franja de color alrededor de la MS.
+- **Ajuste visual de isócronas.** Distancia, puntos cero y [Fe/H] se eligieron a ojo y son degenerados entre sí (los puntos cero incluyen enrojecimiento). Algunos [Fe/H] elegidos difieren mucho de los de la literatura citada en el informe (por ejemplo M22 y M12).
+- **Edad de las isócronas fija en log(edad) = 10,3** (el máximo que permite descargar MIST) para todos los cúmulos; la edad que se usa en la figura fracción-edad proviene de la literatura.
+- Sin corrección por extinción, sin reducción de datos ni fotometría propia, y muestra pequeña (8 cúmulos): la relación edad-fracción no es concluyente.
+
+## Estructura del repositorio
+
+```
+.
+├── configs/config.yaml          # cúmulos, pmra, parámetros de isócronas, q0, método
+├── data/raw/                    # CSV de Gaia DR3 por cúmulo (no incluidos)
+├── iso_files/                   # isócronas MIST .iso.cmd (no incluidas)
+├── src/binfrac/
+│   ├── config.py                # carga de configuración
+│   ├── data_io.py               # lectura de Gaia y selección por pmra
+│   ├── photometry.py            # magnitud de binarias y magnitudes aparentes
+│   ├── isochrones.py            # lectura de MIST, magnitudes aparentes, MS
+│   ├── binaries.py              # identificación de binarias y fracción
+│   ├── msrl.py                  # MSRL preliminar (data binning + polinomio)
+│   ├── plotting.py
+│   ├── pipeline.py              # flujos completos
+│   └── third_party/read_mist_models.py   # lector de isócronas del proyecto MIST (sin modificar)
+├── scripts/                     # 01_membership … 05_fraction_vs_age
+├── tests/                       # pruebas con datos sintéticos
+├── figures/report/              # figuras del informe
+├── results/                     # tablas generadas
+└── reports/                     # informe en PDF
+```
+
+## Instalación
+
+```bash
+git clone https://github.com/<usuario>/gaia-cluster-binary-fraction.git
+cd gaia-cluster-binary-fraction
+python -m venv .venv && source .venv/bin/activate   # en Windows: .venv\Scripts\activate
+pip install -e ".[dev]"
+```
+
+## Datos
+
+Ver [`data/README.md`](data/README.md): consultas a Gaia DR3 (una por cúmulo, en `data/raw/`) e isócronas MIST v1.2 con sistema fotométrico UBV(RI)+ en `iso_files/`.
+
+## Uso
+
+```bash
+python scripts/01_membership.py        # figuras de la selección por movimiento propio
+python scripts/02_preliminary_msrl.py  # MSRL por data binning y fracción preliminar (NGC 4755, 6694, 2808)
+python scripts/03_fit_isochrones.py    # isócronas de distinta metalicidad sobre cada CMD
+python scripts/04_binary_fraction.py   # fracción binaria de cada cúmulo globular
+python scripts/05_fraction_vs_age.py   # fracción binaria vs edad
+```
+
+Las figuras se guardan en `figures/` y las tablas en `results/`. También hay un `Makefile` (`make all`, `make test`).
+
+## Pruebas
+
+```bash
+pytest
+```
+
+Usan un cúmulo sintético con binarias de `q` conocida (se comprueba que el método recupere la fracción esperada) y una isócrona MIST falsa, así que no requieren datos de Gaia ni de MIST.
+
+## Referencias principales
+
+- Pang, X. et al. 2023a, AJ, [doi:10.3847/1538-3881/ace76c](https://doi.org/10.3847/1538-3881/ace76c); 2023b, [arXiv:2307.06992](https://arxiv.org/abs/2307.06992)
+- Milone, A. P. et al. 2012, A&A, 540, A16 · Sollima, A. et al. 2007, MNRAS, 380, 781
+- Choi, J. et al. 2016, ApJ, 823, 102 (isócronas MIST) · Dotter, A. et al. 2007, AJ, 134, 376
+- Gaia Collaboration, Gaia DR3
+
+La lista completa está en el informe.
+
+## Licencia
+
+[MIT](LICENSE). `src/binfrac/third_party/read_mist_models.py` pertenece al proyecto MIST y se incluye sin modificaciones; consulta su sitio (<https://waps.cfa.harvard.edu/MIST/>) para sus condiciones de uso.

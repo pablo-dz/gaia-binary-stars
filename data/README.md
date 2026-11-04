@@ -1,6 +1,5 @@
 # Datos
-
-Esta carpeta y `iso_files/` no incluyen datos. Estructura esperada:
+Estructura esperada:
 
 ```
 data/raw/
